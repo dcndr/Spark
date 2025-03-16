@@ -18,10 +18,6 @@ struct ContentView: View {
                 .tabItem {
                     Label("Meet", systemImage: "person.2.fill")
                 }
-            FriendsView()
-                .tabItem {
-                    Label("About", systemImage: "bubble.fill")
-                }
         }
     }
 
