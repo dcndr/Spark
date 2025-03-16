@@ -253,33 +253,69 @@ struct QRScannerView: UIViewControllerRepresentable {
         }
     }
 }
-
-// SwiftUI Wrapper with ARKit Warning
 struct QRScannerViewWrapper: View {
     @State private var isVerified = false
+    @State private var quizAnswers: [QuizAnswer] = [
+            QuizAnswer(title: "Pets", question: "Do you prefer cats over dogs?"),
+            QuizAnswer(title: "Debates", question: "Do you enjoy debates?"),
+            QuizAnswer(title: "Waking up", question: "Are you a morning person?"),
+            QuizAnswer(title: "Pizza", question: "Do you like pineapple on pizza?")
+        ]
+    @State private var currentIndex: Int = 0
 
     var body: some View {
-        ZStack {
-            QRScannerView(isVerified: $isVerified, isJames: true)
-                .edgesIgnoringSafeArea(.all)
-
-            // Always show ARKit warning overlay
-            Color.black.opacity(0.6)
-                .edgesIgnoringSafeArea(.all)
-                .overlay(
-                    VStack(spacing:8) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .font(.largeTitle)
-                            .opacity(0.5)
-                        Text("ARKit not available on this device")
-                            
-                    }
-                
-                    .font(.title3)
-                    .foregroundColor(.white)
-                    .padding()
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                )
+        NavigationStack {
+            ZStack {
+                QRScannerView(isVerified: $isVerified, isJames: true)
+                    .edgesIgnoringSafeArea(.all)
+                Color.black.opacity(0.6)
+                    .edgesIgnoringSafeArea(.all)
+                    .overlay(
+                        VStack(spacing:8) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.largeTitle)
+                                .opacity(0.5)
+                            Text("ARKit not available on this device")
+                            NavigationLink {
+                                ZStack {
+                                    Color.black.ignoresSafeArea()
+                                    
+                                    VStack(spacing: 20) {
+                                        Text(quizAnswers[currentIndex].question)
+                                            .font(.largeTitle)
+                                            .foregroundColor(.white)
+                                            .multilineTextAlignment(.center)
+                                            .padding()
+                                        
+                                        Button("Next") {
+                                            if currentIndex < quizAnswers.count - 1 {
+                                                currentIndex += 1
+                                            }
+                                        }
+                                        .padding()
+                                        .frame(maxWidth: .infinity)
+                                        .background(Color.white)
+                                        .foregroundColor(.black)
+                                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                                    }
+                                    .padding()
+                                }
+                            } label: {
+                                Text("Continue")
+                                    .padding(.vertical, 12)
+                                    .frame(maxWidth: .infinity)
+                                    .background(.accent)
+                                    .foregroundColor(.white)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                            }
+                        }
+                        
+                            .font(.title3)
+                            .foregroundColor(.white)
+                            .padding()
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                    )
+            }
         }
     }
 }
