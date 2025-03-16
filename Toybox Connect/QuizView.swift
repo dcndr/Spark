@@ -1,96 +1,147 @@
 import SwiftUI
 import SwiftData
 
-struct MeetView: View {
+struct QuizAnswer: Identifiable, Codable {
+    var id = UUID()
+    var title: String
+    var question: String
+    var answer: Bool?
+}
+
+struct SwipeableQuizCard: View {
+    @Binding var answer: QuizAnswer
+    @State private var offset: CGFloat = 0
+    private let swipeThreshold: CGFloat = 100
+    
+    var body: some View {
+        HStack {
+            Button {
+                answer.answer = false
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.title)
+                    .foregroundColor(answer.answer ?? true ? .gray.opacity(0.3) : .red)
+            }
+            HStack {
+                VStack(alignment: .leading) {
+                    Text(answer.title)
+                        .foregroundColor(.primary.opacity(0.8))
+                        .fontWeight(.medium)
+                    Text(answer.question)
+                        .foregroundColor(.primary.opacity(0.4))
+                }
+                Spacer()
+            }
+            .frame(maxWidth: .infinity)
+            .padding(15)
+            .background(cardBackground)
+            .cornerRadius(10)
+            .offset(x: offset)
+            .animation(.interactiveSpring(response: 0.3, dampingFraction: 0.6), value: offset)
+            .gesture(
+                DragGesture()
+                    .onChanged { gesture in
+                        offset = gesture.translation.width
+                    }
+                    .onEnded { _ in
+                        withAnimation {
+                            if offset > swipeThreshold {
+                                offset = 0
+                                answer.answer = true
+                            } else if offset < -swipeThreshold {
+                                offset = 0
+                                answer.answer = false
+                            } else {
+                                offset = 0
+                            }
+                        }
+                    }
+            )
+            Button {
+                answer.answer = true
+            } label: {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.title)
+                    .foregroundColor(answer.answer ?? false ? .green : .gray.opacity(0.3))
+            }
+        }
+    }
+    
+    private var cardBackground: Color {
+        if let passed = answer.answer {
+            return passed ? Color.green.opacity(0.1) : Color.red.opacity(0.1)
+        } else {
+            return Color(.secondarySystemGroupedBackground)
+        }
+    }
+}
+
+struct QuizView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var items: [Item]
     
-    @State private var alternateText = "great friends"
-    private let texts = ["who gets you", "your next buddy"]
-    @State private var timer: Timer?
+    @State private var quizAnswers: [QuizAnswer] = [
+        QuizAnswer(title: "Pets", question: "Do you prefer cats over dogs?"),
+        QuizAnswer(title: "Debates", question: "Do you enjoy debates?"),
+        QuizAnswer(title: "Waking up", question: "Are you a morning person?"),
+        QuizAnswer(title: "Pizza", question: "Do you like pineapple on pizza?")
+    ]
+    
     var body: some View {
-        NavigationSplitView {
-            VStack(alignment: .center) {
-                Image("PhotoCards")
-                    .resizable()
-                    .frame(width: 290, height: 220)
-
-                HStack(spacing: 5) {
-                    Text("Meet")
-                    Text(alternateText)
-                        .fontWeight(.bold)
-                    Text("on Spark")
+        NavigationStack {
+            VStack(alignment: .leading) {
+                HStack {
+                    Image(systemName: "sparkles")
+                        .font(.largeTitle)
+                        .opacity(0.7)
+                    VStack(alignment: .leading) {
+                        Text("Answer and get an instant match")
+                            .fontWeight(.semibold)
+                        Text("Our algortihm will find your perfect opposite to meet.")
+                    }
+                    Spacer()
+                        
                 }
-                .font(.title3)
-                .fontWeight(.semibold)
-                .padding(.vertical, 3)
-                .onAppear {
-                    timer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { _ in
-                        withAnimation {
-                            alternateText = texts.first(where: { $0 != alternateText }) ?? texts[0]
+                .padding(12)
+                .background(.secondary.opacity(0.2))
+                .foregroundStyle(.secondary)
+                .clipShape(RoundedRectangle(cornerRadius: 15))
+                Text("Let's get to know you")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .padding(.vertical, 3)
+                ScrollView {
+                    VStack(spacing: 8) {
+                        ForEach($quizAnswers) { $answer in
+                            SwipeableQuizCard(answer: $answer)
                         }
                     }
                 }
-                .onDisappear {
-                    timer?.invalidate()
-                    timer = nil
+                NavigationLink("Submit") {
+                    SplashView()
                 }
-
-                Text("Every good friendship starts with a spark.\nThe best way to get one? A fire; arguments and disagreements.")
-                    .opacity(0.7)
-                Text("We match you with those you disagree with to build lasting friendships.")
-                    .opacity(0.9)
-                    .fontWeight(.medium)
+                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity)
+                .background(.accent)
+                .foregroundColor(.white)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
                 
-                NavigationLink {
-                    QuizView()
-                } label: {
-                    HStack {
-                        Text("Find friends with the incompatibility quiz")
-                        Image(systemName: "chevron.right")
-                    }
-                    .foregroundStyle(.accent)
-                    .padding(.vertical, 5)
-                }
             }
-            .multilineTextAlignment(.center)
-            .padding(.horizontal, 15)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(15)
             .background(Color(.systemGroupedBackground))
-            .foregroundStyle(.primary.opacity(0.7))
-            .navigationTitle("Meet")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
-            }
-        } detail: {
-            Text("Select an item")
+            .navigationTitle("Incompatibility quiz")
         }
     }
-
+    
     private func addItem() {
         withAnimation {
-            let newItem = Item(name: "Darren Candra", timestamp: Date(), friendship: 5)
+            let newItem = Item(name: "Darren Candra", timestamp: Date(), friendship: 5, answers: quizAnswers)
             modelContext.insert(newItem)
-        }
-    }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
-            }
         }
     }
 }
 
 #Preview {
-    ContentView()
+    QuizView()
         .modelContainer(for: Item.self, inMemory: true)
 }

@@ -8,42 +8,44 @@
 import SwiftUI
 import SwiftData
 
-struct MeetView: View {
+struct FriendsView: View {
     @Environment(\.modelContext) private var modelContext
+    @State var date = Date.now
     @Query private var items: [Item]
 
     var body: some View {
             NavigationSplitView {
-                VStack(alignment: .center) {
-                    Image("PhotoCards")
-                        .resizable()
-                        .frame(width: 290, height: 220)
-                    Text("Meet new friends with Flame")
-                        .fontWeight(.bold)
-                        .font(.title3)
-                        .padding(.vertical, 2)
-                    Text("Every good friendship starts with a spark.\nThe best way to get one? A flame; arguments, and disagreements.")
-                        .opacity(0.7)
-                    Text("We match you with those you disagree with to build lasting friendships.")
-                        .opacity(0.9)
-                        .fontWeight(.medium)
-                    Button {
-                        
-                    } label: {
-                        HStack {
-                            Text("Take the incompatibility quiz")
-                            Image(systemName: "chevron.right")
+                List {
+                    Section {
+                        ForEach(items) { item in
+                            VStack(alignment: .leading) {
+                                Text("Darren Candra")
+                                    .fontWeight(.bold)
+                                    .font(.title3)
+                                    .padding(.vertical, 2)
+                                Text(" \(date.formatted(date: .long, time: .standard))")
+                                    .opacity(0.7)
+                                Text("We match you with those you disagree with to build lasting friendships.")
+                                    .opacity(0.9)
+                                    .fontWeight(.medium)
+                            }
                         }
+                        Button {
+                            
+                        } label: {
+                            HStack {
+                                Text("Take the incompatibility quiz")
+                                Image(systemName: "chevron.right")
+                            }
                             .foregroundStyle(.accent)
                             .padding(.vertical, 5)
+                        }
                     }
                 }
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 15)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color(.systemGroupedBackground))
                 .foregroundStyle(.primary.opacity(0.7))
-                .navigationTitle("Flame")
+                .navigationTitle("Friends")
                 .toolbar {
                     ToolbarItem(placement: .navigationBarTrailing) {
                         EditButton()
@@ -61,7 +63,7 @@ struct MeetView: View {
 
     private func addItem() {
         withAnimation {
-            let newItem = Item(timestamp: Date())
+            let newItem = Item(name: "Darren Candra", timestamp: Date(), friendship: 5)
             modelContext.insert(newItem)
         }
     }
@@ -76,6 +78,6 @@ struct MeetView: View {
 }
 
 #Preview {
-    ContentView()
+    FriendsView()
         .modelContainer(for: Item.self, inMemory: true)
 }
